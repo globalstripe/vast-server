@@ -1,22 +1,39 @@
+const { v4: uuidv4 } = require('uuid');
 var express = require('express');
 var app = express();
 var VAST = require('vast-xml');
+var jwt = require('jsonwebtoken');
+
+var token = jwt.sign({ foo: 'bar', iat: Math.floor(Date.now() / 1000) + 82600 }, 'shhhhh');
+ 
+
 // add timestamps in front of log messages
 require('console-stamp')(console, '[HH:MM:ss.l]');
 
 app.use(express.static('public')); /* this line tells Express to use the public folder as our static folder from which we can serve static files*/
 
-
-
 app.get('/',function(req,res) {
- console.log('Accessing the Root...');
+  console.log('Accessing the Root...');
   res.set('Content-Type', 'text/html');
   res.sendFile(__dirname +'/index.html');
 });
 
+app.get('/uuid',function(req,res) {
+  console.log('Requesting UUID...');
+  res.set('Content-Type', 'application/json');
+  res.send(uuidv4());
+});
+
+app.get('/token',function(req,res) {
+  console.log('Anon Token');
+  res.set('Content-Type', 'application/json');
+  res.send(token);
+ });
+
+
 
 app.get('/vast-xml',function(req,res) {
- console.log('Accessing VAST vast-xml...');
+  console.log('Accessing VAST vast-xml...');
   res.set('Content-Type', 'text/xml');
   res.send(vast.xml({ pretty : true, indent : '  ', newline : '\n' }));
 });
@@ -31,25 +48,25 @@ app.get('/vmap',function(req,res) {
  
 app.all('/secret', function(req, res, next) {
   console.log('Accessing the secret section ...');
-res.set('Content-Type', 'text/xml');
-res.send('<xml>Whats your secret?</xml>');
+  res.set('Content-Type', 'text/xml');
+  res.send('<xml>Whats your secret?</xml>');
   next(); // pass control to the next handler
 });
 
 
 app.get('/impression', function(req, res, next) {
- var session_id = req.query.session_id; // $_GET["session_id"
+  var session_id = req.query.session_id; // $_GET["session_id"
   console.log('Ad Impression' + session_id);
-res.set('Content-Type', 'text/xml');
-res.send('<xml>OK</xml>');
+  res.set('Content-Type', 'text/xml');
+  res.send('<xml>OK</xml>');
 });
 
 //SendFile
 app.get('/vast', function(req, res) {
   var session_id = req.query.session_id; // $_GET["session_id"
-   console.log('Send VAST File' + session_id);
- res.set('Content-Type', 'text/xml');
- res.sendFile(__dirname + '/vast.xml');
+  console.log('Send VAST File' + session_id);
+  res.set('Content-Type', 'text/xml');
+  res.sendFile(__dirname + '/vast.xml');
  })
 
 
