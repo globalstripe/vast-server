@@ -1,12 +1,13 @@
 const { v4: uuidv4 } = require('uuid');
-var express = require('express');
-var app = express();
-var VAST = require('vast-xml');
-var jwt = require('jsonwebtoken');
+const express = require('express');
+const app = express();
+const VAST = require('vast-xml');
+const jwt = require('jsonwebtoken');
+const fs = require('fs');
+const axios = require('axios');
 
-var token = jwt.sign({ foo: 'bar', iat: Math.floor(Date.now() / 1000) + 82600 }, 'shhhhh');
+const privateKey = fs.readFileSync('private_key.pem');
  
-
 // add timestamps in front of log messages
 require('console-stamp')(console, '[HH:MM:ss.l]');
 
@@ -17,7 +18,7 @@ app.get('/',function(req,res) {
   res.set('Content-Type', 'text/html');
   res.sendFile(__dirname +'/index.html');
 });
-
+2
 app.get('/uuid',function(req,res) {
   console.log('Requesting UUID...');
   res.set('Content-Type', 'application/json');
@@ -25,11 +26,69 @@ app.get('/uuid',function(req,res) {
 });
 
 app.get('/token',function(req,res) {
-  console.log('Anon Token');
+  // const token = jwt.sign({ foo: 'bar', iat: Math.floor(Date.now() / 1000) + 82600 }, 'shhhhh');
+  const onemonth = Math.floor(Date.now() / 1000) + 2678400; 
+  const token = jwt.sign({ iss: 'GlobalStripe', exp: onemonth }, {key: privateKey, passphrase:'Adv@18241'}, { algorithm: 'RS256'});
+  console.log('JWT Token');
   res.set('Content-Type', 'application/json');
-  res.send(token);
+  const JWT = {
+    token 
+  };
+
+  const jsonToken = {};
+  res.send(JWT);
  });
 
+
+ // GoogleGet
+ app.get('/google', async (req,res) => {
+
+  const query_param1 = req.query.session.toUpperCase();
+  console.log("Session ID: " + query_param1);
+  const query_param2 = req.query.country.toUpperCase();
+  console.log("CountryCode: " + query_param2);
+
+ const hostname = "https://pubads.g.doubleclick.net"
+ const filepath = "/gampad/ads";
+ const params1 = "?sz=640x480&iu=/124319096/external/ad_rule_samples&ciu_szs=300x250&ad_rule=1&impl=s&gdfp_req=1&env=vp";
+ const params2 = "&output=vmap&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ar%3Dpremidpost&cmsid=496&vid=short_onecue&correlator=[avail.random]";
+
+ const url = hostname + filepath + params1 + params2;
+ // console.log(url)
+
+
+ try {
+ const {status, data} = await axios.get(url);
+ 
+    console.log("Fetching Google VMAP")
+    console.log("Google Response: " + status)     
+    res.set('Content-Type', 'text/xml');
+    res.send(data);
+    // res.send(response.data({ pretty : true, indent : '  ', newline : '\n' }));
+
+
+  }
+ 
+    catch (e) {
+      console.log("Google Axios Get Request Failed")
+      console.log("Status:" + e.status)
+      //console.log(e);
+    }
+
+});
+
+
+app.get('/params',function(req,res) {
+   console.log('Accessing params...');
+   const query_param1 = req.query.session.toUpperCase();
+   console.log("Session ID: " + query_param1);
+   const query_param2 = req.query.country.toUpperCase();
+   console.log("CountryCode: " + query_param2);
+   res.set('Content-Type', 'text/html');
+   let response= query_param2  + '-vast.xml?sessionid=' + query_param1 ;
+   console.log(response);
+   res.send('<html><body>Requesting: ' + response + '</body></html>');
+});
 
 
 app.get('/vast-xml',function(req,res) {
@@ -37,6 +96,7 @@ app.get('/vast-xml',function(req,res) {
   res.set('Content-Type', 'text/xml');
   res.send(vast.xml({ pretty : true, indent : '  ', newline : '\n' }));
 });
+
 
 app.get('/vmap',function(req,res) {
   var session_id = req.query.session_id; // $_GET["session_id"]
@@ -116,7 +176,12 @@ var server = app.listen(8091, function () {
    var host = server.address().address
    var port = server.address().port
    
-   console.log("Example app listening at http://%s:%s", host, port)
+   console.log("Listening at http://%s:%s", host, port)
+   console.log("Express Version: ", require('express/package').version);
 })
+
+
+
+
 
 
