@@ -6,6 +6,7 @@ const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const axios = require('axios');
 
+
 const privateKey = fs.readFileSync('private_key.pem');
  
 // add timestamps in front of log messages
@@ -78,16 +79,52 @@ app.get('/token',function(req,res) {
 });
 
 
-app.get('/params',function(req,res) {
-   console.log('Accessing params...');
-   const query_param1 = req.query.session.toUpperCase();
-   console.log("Session ID: " + query_param1);
-   const query_param2 = req.query.country.toUpperCase();
-   console.log("CountryCode: " + query_param2);
+app.get('/adrequest',function(req,res) {
+
+  var aquery = require('url').parse(req.url,true).query;
+  console.log('Accessing params...');
+
+  let sessionid = "000000";
+  let countrycode = "UK";
+  let promoid = "0000001"
+
+  if(aquery.session != undefined){
+    sessionid = req.query.session.toUpperCase();
+    console.log("SessionID: " + sessionid);
+  }
+  else{
+    sessionid = "000000";
+    console.log("SessionID: " + sessionid);
+  }
+
+  if(aquery.country != undefined){
+    countrycode = req.query.country.toUpperCase();
+    console.log("CountryCode: " + countrycode);
+  }
+  else{
+    // Default to UK
+    countrycode = "UK"
+    console.log("CountryCode: " + countrycode)
+  }
+
+  if(aquery.promo != undefined){
+    promoid = req.query.promo.toUpperCase();
+    console.log("PromoCode: " + promoid);
+  }
+  else{
+    // Default to 0000001
+    promoid = "000001"
+    console.log("PromoCode: " + promoid);
+  }
+
    res.set('Content-Type', 'text/html');
-   let response= query_param2  + '-vast.xml?sessionid=' + query_param1 ;
+   let response= countrycode  + '-vast.xml';
    console.log(response);
-   res.send('<html><body>Requesting: ' + response + '</body></html>');
+   // res.send('<html><body>Requesting: ' + response + '</body></html>');
+
+   res.set('Content-Type', 'text/xml');
+   res.sendFile(__dirname + '/' + response);
+
 });
 
 
