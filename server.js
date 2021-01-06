@@ -12,7 +12,17 @@ const privateKey = fs.readFileSync('private_key.pem');
 // add timestamps in front of log messages
 require('console-stamp')(console, '[HH:MM:ss.l]');
 
-app.use(express.static('public')); /* this line tells Express to use the public folder as our static folder from which we can serve static files*/
+app.use(express.static('public')); /* this line tells Express to use the public folder as our static folder from which we can serve static files 
+including sub folders */
+/* you can define multiple 'static' locations 
+
+app.use(express.static('public'))
+app.use(express.static('files'))
+
+Express looks up the files in the order in which you set the static directories with the express.static middleware function.
+
+*/
+
 
 app.get('/',function(req,res) {
   console.log('Accessing the Root...');
@@ -24,6 +34,13 @@ app.get('/uuid',function(req,res) {
   console.log('Requesting UUID...');
   res.set('Content-Type', 'application/json');
   res.send(uuidv4());
+});
+
+
+app.get('/teapot',function(req,res) {
+console.log('Requesting TeaPot.');
+res.status(418);
+res.send('');
 });
 
 app.get('/token',function(req,res) {
@@ -85,7 +102,7 @@ app.get('/adrequest',function(req,res) {
   console.log('Accessing params...');
 
   let sessionid = "000000";
-  let countrycode = "UK";
+  let countrycode = "ZULU";
   let promoid = "0000001"
 
   if(aquery.session != undefined){
@@ -103,7 +120,7 @@ app.get('/adrequest',function(req,res) {
   }
   else{
     // Default to UK
-    countrycode = "UK"
+    countrycode = "ZULU"
     console.log("CountryCode: " + countrycode)
   }
 
@@ -209,7 +226,7 @@ creative.attachMediaFile('http://domain.com/file1.ext', {
 creative.attachTrackingEvent('creativeView', 'http://creativeview.com');
 creative.attachVideoClick('ClickThrough', 'http://click-through.com');
 
-var server = app.listen(8091, function () {
+var server = app.listen(8080, function () {
    var host = server.address().address
    var port = server.address().port
    
